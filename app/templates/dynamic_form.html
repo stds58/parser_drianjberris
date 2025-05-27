@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+</head>
+<body>
+    <h2>{{ title }}</h2>
+
+    <!-- Блок ошибок -->
+    {% if errors %}
+        <div style="color: red; border: 1px solid red; padding: 10px; margin-bottom: 1rem;">
+            <strong>Ошибка валидации:</strong>
+            <ul>
+                {% for error in errors %}
+                    <li>{{ error.loc|join(': ') }} — {{ error.msg }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <!-- Форма -->
+    <form method="post">
+        {% for name, field in fields.items() %}
+            <div style="margin-bottom: 1rem;">
+                <label for="{{ name }}">{{ field.description or name }}</label><br>
+
+                {% if field.annotation == 'bool' %}
+                    <input type="checkbox"
+                           id="{{ name }}"
+                           name="{{ name }}"
+                           {% if form_values and form_values[name] %}checked{% endif %}>
+                {% else %}
+                    <input type="text"
+                           id="{{ name }}"
+                           name="{{ name }}"
+                           value="{% if form_values %}{{ form_values[name] }}{% endif %}"
+                           required>
+                {% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit">Сохранить</button>
+    </form>
+
+    <!-- Отправленные данные -->
+    {% if data %}
+        <div style="margin-top: 2rem; border: 1px solid #ccc; padding: 10px;">
+            <h3>Вы ввели:</h3>
+            <pre>{{ data }}</pre>
+        </div>
+    {% endif %}
+</body>
+</html>
