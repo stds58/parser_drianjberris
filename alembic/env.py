@@ -14,7 +14,6 @@ def import_all_models(package_name: str):
     package = importlib.import_module(package_name)
     for _, name, _ in pkgutil.walk_packages(package.__path__, package_name + "."):
         if "models" in name:
-            print('name=== ', name)
             importlib.import_module(name)
             print("Tables in Base.metadata:", Base.metadata.tables.keys())
 

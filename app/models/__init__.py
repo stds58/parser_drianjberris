@@ -1,3 +1,3 @@
-from .manufacturer import Manufacturer
-from .product import Product
+from .item import Item
+from .search import Search
 from app.db.base import Base

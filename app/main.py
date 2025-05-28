@@ -16,7 +16,7 @@ from app.api.v2.base_router import v2_router
 
 
 #app = FastAPI(debug=settings.DEBUG)
-app = FastAPI(debug=settings.app.DEBUG, title="API", version="0.1.0")
+app = FastAPI(debug=settings.DEBUG, title="API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,

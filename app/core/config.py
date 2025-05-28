@@ -45,7 +45,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         #env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"),
-        env_file=env_path,
+        env_file=env_path
     )
 
 settings = Settings()
@@ -54,7 +54,7 @@ settings = Settings()
 
 def get_db_url(testing: bool = False):
     return (f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@"
-            f"{settings.db.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
+            f"{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
 
 def get_auth_data():
     return {"secret_key": settings.SECRET_KEY, "algorithm": settings.ALGORITHM}

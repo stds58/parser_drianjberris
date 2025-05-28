@@ -1,9 +1,9 @@
-version: '3.8'
+
 
 services:
   db:
     image: postgres:16
-    container_name: postgres-db
+    container_name: wb-db
     environment:
       POSTGRES_USER: ${DB_LOGIN}
       POSTGRES_PASSWORD: ${DB_PASS}

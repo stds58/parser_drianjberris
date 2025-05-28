@@ -34,7 +34,7 @@ MODEL_MAP = {
 }
 
 @router.get("/add")
-async def show_add_form(request: Request, model: str = "manufacturer"):
+async def show_add_form(request: Request, model: str = "item"):
     ModelClass = MODEL_MAP[model]
     return templates.TemplateResponse("dynamic_form.html", {
         "request": request,
@@ -43,26 +43,26 @@ async def show_add_form(request: Request, model: str = "manufacturer"):
     })
 
 @router.post("/add", response_class=HTMLResponse)
-async def put_manufacturer(request: Request, session: AsyncSession = Depends(connection())):
+async def put_search(request: Request, session: AsyncSession = Depends(connection())):
     try:
         form_data = await request.form()
-        manufacturer_data = SItemAdd(**dict(form_data))
+        item_data = SItemAdd(**dict(form_data))
 
-        db_manufacturer = await add_one_item(data=manufacturer_data, session=session)
+        db_item = await add_one_item(data=item_data, session=session)
 
         return templates.TemplateResponse("dynamic_form.html", {
             "request": request,
             "fields": SItemAdd.model_fields,
-            "title": "Добавить производителя",
+            "title": "Добавить item",
             "form_values": dict(form_data),
-            "data": db_manufacturer
+            "data": db_item
         })
     except ValidationError as e:
         # Ошибки валидации Pydantic
         return templates.TemplateResponse("dynamic_form.html", {
             "request": request,
             "fields": SItemAdd.model_fields,
-            "title": "Добавить производителя",
+            "title": "Добавить item",
             "form_values": dict(form_data),
             "errors": e.errors()
         })
@@ -79,7 +79,7 @@ async def put_manufacturer(request: Request, session: AsyncSession = Depends(con
         return templates.TemplateResponse("dynamic_form.html", {
             "request": request,
             "fields": SItemAdd.model_fields,
-            "title": "Добавить производителя",
+            "title": "Добавить item",
             "form_values": dict(form_data),
             "errors": [{"loc": ["База данных"], "msg": error_msg}]
         })

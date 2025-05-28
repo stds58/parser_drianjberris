@@ -11,6 +11,6 @@ async def add_one_item(data: SItemAdd, session: AsyncSession):
     item = await ItemDAO.add_one(session=session, **data.model_dump())
     return item
 
-async def delete_one_item(data: SItemAdd, session: AsyncSession):
-    item = await ItemDAO.delete_one(session=session, **data.model_dump())
+async def delete_all_item(data: SItemAdd, session: AsyncSession):
+    item = await ItemDAO.delete_all(session=session)
     return item

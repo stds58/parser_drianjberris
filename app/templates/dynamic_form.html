@@ -43,10 +43,19 @@
     </form>
 
     <!-- Отправленные данные -->
-    {% if data %}
+    {% if phrase %}
         <div style="margin-top: 2rem; border: 1px solid #ccc; padding: 10px;">
             <h3>Вы ввели:</h3>
-            <pre>{{ data }}</pre>
+            <pre>{{ phrase }}</pre>
+        </div>
+    {% endif %}
+
+    {% if data %}
+        <div style="margin-top: 2rem; border: 1px solid #ccc; padding: 10px;">
+            <h3>Результат поиска:</h3>
+            {% for row in data %}
+            <pre>{{ row }}</pre>
+            {%  endfor %}
         </div>
     {% endif %}
 </body>
