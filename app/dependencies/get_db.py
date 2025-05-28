@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from functools import wraps
 from typing import Optional, Callable, Any, AsyncGenerator
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from fastapi import HTTPException
 from app.db.session import async_session_maker, get_session_with_isolation
@@ -21,8 +21,8 @@ def connection(isolation_level: Optional[str] = None, commit: bool = True):
     async def dependency() -> AsyncGenerator[AsyncSession, None]:
         async with get_session_with_isolation(async_session_maker, isolation_level) as session:
             try:
-                result = await session.execute(text("SHOW transaction_isolation;"))
-                print("SHOW transaction_isolation;", result.scalar())
+                # result = await session.execute(text("SHOW transaction_isolation;"))
+                # print("SHOW transaction_isolation;", result.scalar())
                 yield session
                 if commit and session.in_transaction():
                     await session.commit()
@@ -35,6 +35,9 @@ def connection(isolation_level: Optional[str] = None, commit: bool = True):
                 if session.in_transaction():
                     await session.rollback()
                 raise e # HTTPException(status_code=500, detail=f"Ошибка БД: {e}") from e
+            except (ConnectionRefusedError, OSError, OperationalError) as e:
+                # Обработка ошибок подключения к БД
+                raise e
             except Exception as e:
                 if session.in_transaction():
                     await session.rollback()

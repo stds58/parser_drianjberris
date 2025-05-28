@@ -10,6 +10,8 @@ from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from asyncpg.exceptions import UniqueViolationError
 from app.utils.wildberies_parser import WildBeriesParser
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
+
 
 
 V2_DIR = Path(__file__).resolve().parent
@@ -36,22 +38,58 @@ MODEL_MAP = {
 
 @router.get("/add")
 async def show_add_search_form(request: Request, model: str = "search", session: AsyncSession = Depends(connection())):
-    ModelClass = MODEL_MAP[model]
-    db_search = await find_many_search(filters=None, session=session)
-    if len(db_search) == 0:
-        phrase = None
-        data = None
-    else:
-        phrase = db_search [0].phrase
-        goods = WildBeriesParser(phrase)
-        data = goods.get_response
-    return templates.TemplateResponse("dynamic_form.html", {
-        "request": request,
-        "fields": ModelClass.model_fields,
-        "title": f"Добавить {model}",
-        "phrase": phrase,
-        "data": data
-    })
+    try:
+        ModelClass = MODEL_MAP[model]
+        db_search = await find_many_search(filters=None, session=session)
+        if len(db_search) == 0:
+            phrase = None
+            data = None
+        else:
+            phrase = db_search[0].phrase
+            goods = WildBeriesParser(phrase)
+            data = goods.get_response
+        return templates.TemplateResponse("dynamic_form.html", {
+            "request": request,
+            "fields": ModelClass.model_fields,
+            "title": f"Добавить {model}",
+            "phrase": phrase,
+            "data": data
+        })
+    except ValidationError as e:
+        # Ошибки валидации Pydantic
+        return templates.TemplateResponse("dynamic_form.html", {
+            "request": request,
+            "fields": SSearchAdd.model_fields,
+            "title": "Добавить search",
+            "form_values": {"a":1},
+            "errors": e.errors()
+        })
+    except (ConnectionRefusedError, OSError, OperationalError) as e:
+        await session.rollback()
+        error_msg = str(e)
+        return templates.TemplateResponse("dynamic_form.html", {
+            "request": request,
+            "fields": SSearchAdd.model_fields,
+            "title": "Добавить производителя",
+            "form_values": {"a":1},
+            "errors": [{"loc": ["База данных"], "msg": error_msg}]
+        })
+    except IntegrityError as e:
+        # Ошибки целостности данных (включая уникальные ограничения)
+        await session.rollback()
+        error_msg = str(e.orig)
+        if isinstance(e.orig, UniqueViolationError):
+            error_msg = f"Уже существует запись: {error_msg}"
+            print('error_msg ',error_msg)
+
+        # Передаём ошибку в шаблон
+        return templates.TemplateResponse("dynamic_form.html", {
+            "request": request,
+            "fields": SSearchAdd.model_fields,
+            "title": "Добавить search",
+            "form_values": {"a":1},
+            "errors": [{"loc": ["База данных"], "msg": error_msg}]
+        })
 
 @router.post("/add", response_class=HTMLResponse)
 async def put_search(request: Request, session: AsyncSession = Depends(connection())):
@@ -67,6 +105,16 @@ async def put_search(request: Request, session: AsyncSession = Depends(connectio
             "title": "Добавить search",
             "form_values": dict(form_data),
             "errors": e.errors()
+        })
+    except (ConnectionRefusedError, OSError, OperationalError) as e:
+        await session.rollback()
+        error_msg = str(e)
+        return templates.TemplateResponse("dynamic_form.html", {
+            "request": request,
+            "fields": SSearchAdd.model_fields,
+            "title": "Добавить производителя",
+            "form_values": dict(form_data),
+            "errors": [{"loc": ["База данных"], "msg": error_msg}]
         })
     except IntegrityError as e:
         # Ошибки целостности данных (включая уникальные ограничения)
