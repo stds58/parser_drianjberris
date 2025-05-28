@@ -44,8 +44,8 @@ class WildBeriesParser:
         page = 1
         lists = []
         while True:
-            if page == 5:
-                break
+            # if page == 5:
+            #     break
             data = self.create_response(page)
             if data is None:
                 break

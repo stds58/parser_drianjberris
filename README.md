@@ -128,3 +128,7 @@
 
     docker-compose up --build
 
+**alembic**
+
+    alembic revision --autogenerate -m "Auto-generated migration"
+    alembic upgrade head

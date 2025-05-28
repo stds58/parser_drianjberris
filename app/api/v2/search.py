@@ -38,9 +38,13 @@ MODEL_MAP = {
 async def show_add_search_form(request: Request, model: str = "search", session: AsyncSession = Depends(connection())):
     ModelClass = MODEL_MAP[model]
     db_search = await find_many_search(filters=None, session=session)
-    phrase = db_search [0].phrase
-    goods = WildBeriesParser(phrase)
-    data = goods.get_response
+    if len(db_search) == 0:
+        phrase = None
+        data = None
+    else:
+        phrase = db_search [0].phrase
+        goods = WildBeriesParser(phrase)
+        data = goods.get_response
     return templates.TemplateResponse("dynamic_form.html", {
         "request": request,
         "fields": ModelClass.model_fields,
