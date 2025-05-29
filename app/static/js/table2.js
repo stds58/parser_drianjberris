@@ -1,4 +1,3 @@
-
 // === Глобальные переменные ===
 let rawData = [];                // Все полученные элементы
 let filteredData = [];           // Отфильтрованные/отсортированные данные
@@ -9,21 +8,20 @@ let currentSort = {              // Состояние сортировки
 
 // === Подключение к Server-Sent Events (SSE) ===
 document.addEventListener("DOMContentLoaded", () => {
+    updateSortIcons();
+    applyFilters(); // Рендерим начальное состояние (может быть пустым)
 
     if (typeof EventSource !== "undefined") {
         const eventSource = new EventSource("/frontend/v2/search/stream-data");
-
         eventSource.onmessage = function(event) {
             try {
                 const item = JSON.parse(event.data);
-                alert('item'+item);
                 rawData.push(item); // Добавляем новый товар
                 applyFilters();     // Пересчитываем фильтры и рендерим
             } catch (e) {
                 console.error("Ошибка парсинга события:", e);
             }
         };
-
         eventSource.onerror = function(err) {
             console.error("Ошибка SSE:", err);
         };
@@ -36,11 +34,10 @@ document.addEventListener("DOMContentLoaded", () => {
 function applyFilters() {
     let result = [...rawData];
 
-    // Фильтр по текстовым полям
+    // 1. Фильтр по текстовым полям
     document.querySelectorAll('.filter-input').forEach(input => {
         const column = input.getAttribute('data-column');
         const value = input.value.trim().toLowerCase();
-
         if (value) {
             result = result.filter(item =>
                 String(item[column] || '').toLowerCase().includes(value)
@@ -48,14 +45,12 @@ function applyFilters() {
         }
     });
 
-    // Фильтр по диапазонам (цена, отзывы и т.д.)
+    // 2. Фильтр по диапазонам (цена, отзывы и т.д.)
     const rangeInputs = document.querySelectorAll('.range-input');
     const ranges = {};
-
     rangeInputs.forEach(input => {
         const column = input.getAttribute('data-column');
         if (!ranges[column]) ranges[column] = [];
-
         const val = input.value.trim();
         ranges[column].push(val ? parseFloat(val) : null);
     });
@@ -64,13 +59,11 @@ function applyFilters() {
         if ((min !== null && !isNaN(min)) || (max !== null && !isNaN(max))) {
             result = result.filter(item => {
                 let numVal;
-
                 if (['price_u', 'sale_price_u'].includes(column)) {
                     numVal = item[column] / 100;
                 } else {
                     numVal = item[column];
                 }
-
                 return (
                     (min === null || isNaN(min) || numVal >= min) &&
                     (max === null || isNaN(max) || numVal <= max)
@@ -79,16 +72,14 @@ function applyFilters() {
         }
     });
 
-    // Сортировка
+    // 3. Сортировка
     if (currentSort.column) {
         result.sort((a, b) => {
             const valA = a[currentSort.column];
             const valB = b[currentSort.column];
-
             if (typeof valA === 'string' && typeof valB === 'string') {
                 return valA.localeCompare(valB) * currentSort.direction;
             }
-
             return (valA > valB ? 1 : -1) * currentSort.direction;
         });
     }
@@ -113,7 +104,6 @@ function renderTable(data) {
 
     data.forEach(item => {
         const row = document.createElement("tr");
-
         row.innerHTML = `
             <td>${item.name || ''}</td>
             <td>${item.brand || ''}</td>
@@ -134,7 +124,6 @@ window.setSort = function(column) {
         currentSort.column = column;
         currentSort.direction = 1;
     }
-
     updateSortIcons();
     applyFilters();
 };
@@ -146,7 +135,6 @@ function updateSortIcons() {
         const icon = document.getElementById(`${col}-sort-icon`);
         if (icon) icon.textContent = '';
     });
-
     if (currentSort.column) {
         const icon = document.getElementById(`${currentSort.column}-sort-icon`);
         if (icon) {
@@ -154,8 +142,3 @@ function updateSortIcons() {
         }
     }
 }
-
-// === Вызывается при загрузке DOM ===
-document.addEventListener("DOMContentLoaded", () => {
-    updateSortIcons();
-});
