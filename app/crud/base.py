@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, TypeVar, Any, Generic, ClassVar, AsyncG
 from sqlalchemy import update as sqlalchemy_update, delete as sqlalchemy_delete
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import Select, select
+from sqlalchemy import Select, select, insert
 from sqlalchemy.orm import joinedload, class_mapper, declarative_base, DeclarativeBase
 from fastapi import HTTPException, status
 from pydantic import BaseModel as PydanticModel
@@ -52,6 +52,12 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         await session.flush()
         await session.refresh(new_instance)
         return new_instance
+
+    @classmethod
+    async def add_many(cls, session: AsyncSession, values_list: List[Dict]) -> None:
+        stmt = insert(cls.model).values(values_list)
+        await session.execute(stmt)
+        await session.flush()
 
     @classmethod
     async def delete_all(cls, session: AsyncSession) -> dict:

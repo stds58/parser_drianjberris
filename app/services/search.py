@@ -6,6 +6,8 @@ from sqlalchemy.exc import IntegrityError
 from asyncpg.exceptions import UniqueViolationError
 from fastapi import Request
 from fastapi.datastructures import FormData
+from fastapi.responses import StreamingResponse
+
 
 
 async def find_many_search(filters: SSearchFilter, session: AsyncSession):
@@ -28,4 +30,6 @@ async def add_new_search(data: FormData, session: AsyncSession):
     del_db_search = await delete_all_search(session=session)
     add_db_search = await add_one_search(data=search_data, session=session)
     return data
+
+
 

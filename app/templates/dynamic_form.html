@@ -104,7 +104,7 @@
 
 
 <script>
-    const rawData = {{ data | tojson }};
+    const rawData = {{ data | safe if data else 'null' }};
 </script>
 <script src="/static/js/table.js"></script>
 <!-- Подключение Font Awesome для стрелок -->
