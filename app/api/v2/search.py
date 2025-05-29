@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from app.dependencies.get_db import connection
-from app.services.search import find_many_search, add_one_search, delete_all_search, add_new_search
+from app.services.search import find_many_search, add_one_search, delete_all_search, add_new_search, add_new_items
 from app.services.item import add_many_item, delete_all_item
 from app.schemas.search import SSearchFilter, SSearchAdd
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +12,11 @@ from sqlalchemy.exc import IntegrityError
 from asyncpg.exceptions import UniqueViolationError
 from app.utils.wildberies_parser import WildBeriesParser
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
+import asyncio
+from fastapi.responses import StreamingResponse
+import orjson, json
+from app.db.session import async_session_maker
+from app.services.item import find_all_stream_item
 
 
 
@@ -37,18 +42,32 @@ MODEL_MAP = {
     "search": SSearchAdd
 }
 
+
+@router.get("/stream-data")
+async def stream_data(session: AsyncSession = Depends(connection())):
+    async def event_generator():
+        async for item in add_new_items(session=session):
+            yield f"data: {item}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
 @router.get("/add")
 async def show_add_search_form(request: Request, model: str = "search", session: AsyncSession = Depends(connection())):
     try:
         ModelClass = MODEL_MAP[model]
+
         db_search = await find_many_search(filters=None, session=session)
         if len(db_search) == 0:
             phrase = None
             data = None
         else:
             phrase = db_search[0].phrase
-            goods = WildBeriesParser(phrase)
-            data = goods.get_response
+            async for item in add_new_items(session=session):
+                data = item
+                #print('ddddddddddd ',item)
+            #goods = WildBeriesParser(phrase)
+            #data = goods.get_response
 
         return templates.TemplateResponse("dynamic_form.html", {
             "request": request,
@@ -97,8 +116,8 @@ async def show_add_search_form(request: Request, model: str = "search", session:
 async def put_search(request: Request, session: AsyncSession = Depends(connection())):
     try:
         form_data = await request.form()
+        await delete_all_item(session=session)
         await add_new_search(data=form_data, session=session)
-        await delete_all_item
         return RedirectResponse(url="/frontend/v2/search/add", status_code=303)
     except ValidationError as e:
         # Ошибки валидации Pydantic

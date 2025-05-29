@@ -46,6 +46,18 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         return [cls.pydantic_model.model_validate(obj, from_attributes=True) for obj in results]
 
     @classmethod
+    async def find_all_stream(cls,
+                              session: AsyncSession,
+                              filters: FilterSchemaType = None
+                              ) -> AsyncGenerator[ModelType, None]:
+        query = select(cls.model)
+        if filters is not None:
+            query = cls._apply_filters(query, filters)
+        stream = await session.stream_scalars(query)
+        async for record in stream:
+            yield record
+
+    @classmethod
     async def add_one(cls, session: AsyncSession, **values) -> ModelType:
         new_instance = cls.model(**values)
         session.add(new_instance)
@@ -58,6 +70,7 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         stmt = insert(cls.model).values(values_list)
         await session.execute(stmt)
         await session.flush()
+        await session.commit()
 
     @classmethod
     async def delete_all(cls, session: AsyncSession) -> dict:

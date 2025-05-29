@@ -20,3 +20,26 @@ class Item(Base):
     def __repr__(self):
         return f"<{self.__class__.__name__} id={self.id}>"
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "brand": self.brand,
+            "price_u": self.price_u,
+            "sale_price_u": self.sale_price_u,
+            "feedbacks": self.feedbacks,
+            "rating": self.rating,
+            "id_search": self.id_search
+        }
+
+    def to_html(self):
+        return f"""
+            <div class="product-card">
+                <h4>{self.name}</h4>
+                <p><strong>Бренд:</strong> {self.brand}</p>
+                <p><strong>Цена:</strong> {self.price_u // 100} ₽</p>
+                <p><strong>Рейтинг:</strong> ⭐{self.rating} ({self.feedbacks} отзывов)</p>
+                <hr>
+            </div>
+        """
+
