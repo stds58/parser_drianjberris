@@ -1,3 +1,4 @@
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -7,9 +8,15 @@ from app.api.v1.base_router import v1_router
 from app.api.v2.base_router import v2_router
 
 
-#app = FastAPI(debug=settings.DEBUG)
 app = FastAPI(debug=settings.DEBUG, title="API", version="0.1.0")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Получаем путь к текущему файлу main.py
+CURRENT_FILE = Path(__file__).resolve()
+CURRENT_DIR = CURRENT_FILE.parent
+
+# Теперь можно указать точный путь к static/
+STATIC_DIR = CURRENT_DIR / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

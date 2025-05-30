@@ -47,10 +47,17 @@ async def stream_data(session: AsyncSession = Depends(connection())):
 async def show_add_search_form(request: Request, model: str = "search", session: AsyncSession = Depends(connection())):
     try:
         ModelClass = MODEL_MAP[model]
+        db_search = await find_many_search(filters=None, session=session)
+        await session.close()
+        if len(db_search) > 0:
+            phrase = db_search[0].phrase
+        else:
+            phrase = None
         return templates.TemplateResponse("dynamic_form.html", {
             "request": request,
             "fields": ModelClass.model_fields,
             "title": f"Добавить {model}",
+            "phrase": phrase
         })
     except ValidationError as e:
         # Ошибки валидации Pydantic
