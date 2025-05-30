@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.api.v1.base_router import v1_router
@@ -17,8 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# http://localhost:8000/api/v1/search/find/
-# http://localhost:8000/frontend/v2/search/add/
+@app.get("/")
+async def redirect_to_frontend():
+    return RedirectResponse(url="/frontend/v2/search/add")
 
 app.include_router(v1_router, prefix="/api")
 app.include_router(v2_router, prefix="/frontend")
