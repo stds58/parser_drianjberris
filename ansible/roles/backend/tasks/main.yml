@@ -1,20 +1,26 @@
 ---
 - name: Ensure directory exists
   file:
-    path: /opt/parser_drianberris
+    path: /opt/parser_drianjberris
     state: directory
 
 - name: Clone backend repository
   git:
     repo: https://{{ github_token }}@github.com/stds58/parser_drianjberris
-    dest: /opt/vard-backend
+    dest: /opt/parser_drianjberris
     version: master
     force: yes
+
+- name: Create alembic/versions directory if not exists
+  file:
+    path: "/opt/parser_drianberris/alembic/versions"
+    state: directory
+    mode: '0755'
 
 - name: Copy .env file
   copy:
     src: .env
-    dest: /opt/parser_drianberris/.env
+    dest: /opt/parser_drianjberris/.env
     force: yes
     owner: root
     group: root
@@ -23,7 +29,7 @@
 - name: Copy .env file
   copy:
     src: .env
-    dest: /opt/parser_drianberris/.env
+    dest: /opt/parser_drianjberris/.env
     force: yes
     owner: root
     group: root
@@ -34,7 +40,7 @@
   command: >
     docker-compose down --volumes --remove-orphans
   args:
-    chdir: /opt/parser_drianberris
+    chdir: /opt/parser_drianjberris
   become: yes
   ignore_errors: yes
 
@@ -42,26 +48,26 @@
   command: >
     docker-compose build --no-cache
   args:
-    chdir: /opt/parser_drianberris
+    chdir: /opt/parser_drianjberris
   become: yes
 
 - name: Restart backend services with Docker Compose
   command: >
     docker-compose up -d --force-recreate
   args:
-    chdir: /opt/parser_drianberris
+    chdir: /opt/parser_drianjberris
   become: yes
 
-# Добавляем запись в /etc/hosts
-- name: Get backend container IP
-  shell: "docker inspect -f '{{ '{{' }}range .NetworkSettings.Networks{{ '}}' }}{{ '{{' }}.IPAddress{{ '}}' }}{{ '{{' }}end{{ '}}' }}' fastapi-app-1"
-  register: container_ip
-  changed_when: false
-
-- name: Add backend container host entry to /etc/hosts
-  blockinfile:
-    path: /etc/hosts
-    block: |
-      {{ container_ip.stdout }} fastapi-app-1
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - DOCKER CONTAINER"
-    state: present
+## Добавляем запись в /etc/hosts
+#- name: Get backend container IP
+#  shell: "docker inspect -f '{{ '{{' }}range .NetworkSettings.Networks{{ '}}' }}{{ '{{' }}.IPAddress{{ '}}' }}{{ '{{' }}end{{ '}}' }}' parser_drianjberris-fastapi-app"
+#  register: container_ip
+#  changed_when: false
+#
+#- name: Add backend container host entry to /etc/hosts
+#  blockinfile:
+#    path: /etc/hosts
+#    block: |
+#      {{ container_ip.stdout }} parser_drianjberris-fastapi-app
+#    marker: "# {mark} ANSIBLE MANAGED BLOCK - DOCKER CONTAINER"
+#    state: present

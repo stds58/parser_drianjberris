@@ -20,7 +20,7 @@
       {{
         docker_containers.stdout | from_json
         | first | json_query('Containers.*')
-        | selectattr('Name', 'in', ['fastapi-app-1'])
+        | selectattr('Name', 'in', ['parser_drianjberris-fastapi-app'])
         | map(attribute='IPv4Address') | map('split', '/') | map('first')
         | list
       }}
@@ -37,7 +37,7 @@
     state: present
   loop: >-
     {{
-      docker_ips | zip(['fastapi-app-1']) | map('join', ' ') | list
+      docker_ips | zip(['parser_drianjberris-fastapi-app']) | map('join', ' ') | list
     }}
   when: docker_ips is defined
 
@@ -56,11 +56,19 @@
     state: directory
     mode: '0755'
 
-- name: Enable Nginx site configuration
-  file:
-    src: /etc/nginx/sites-available/default-http
-    dest: /etc/nginx/sites-enabled/default-http
-    state: link
+# Добавляем запись в /etc/hosts
+- name: Get backend container IP
+  shell: "docker inspect -f '{{ '{{' }}range .NetworkSettings.Networks{{ '}}' }}{{ '{{' }}.IPAddress{{ '}}' }}{{ '{{' }}end{{ '}}' }}' fastapi-app"
+  register: container_ip
+  changed_when: false
+
+- name: Add backend container host entry to /etc/hosts
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      {{ container_ip.stdout }} fastapi-app
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - DOCKER CONTAINER"
+    state: present
 
 # Копирование шаблона конфигурации Nginx (HTTP)
 - name: Copy initial Nginx HTTP configuration template
@@ -71,6 +79,11 @@
     group: root
     mode: '0644'
 
+- name: Enable Nginx site configuration
+  file:
+    src: /etc/nginx/sites-available/default-http
+    dest: /etc/nginx/sites-enabled/default-http
+    state: link
 
 - name: Test Nginx configuration
   command: nginx -t
