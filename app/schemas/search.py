@@ -1,6 +1,6 @@
 #модели Pydantic  https://habr.com/ru/companies/amvera/articles/851642/
 from typing import Optional, List
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field
 from app.schemas.base import BaseConfigModel, BaseFilter
 
 

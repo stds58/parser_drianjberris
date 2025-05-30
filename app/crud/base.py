@@ -1,14 +1,11 @@
-from datetime import datetime
 from typing import Optional, List, Dict, TypeVar, Any, Generic, ClassVar, AsyncGenerator
-from sqlalchemy import update as sqlalchemy_update, delete as sqlalchemy_delete
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from fastapi import status
+from pydantic import BaseModel as PydanticModel
+from sqlalchemy import delete as sqlalchemy_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Select, select, insert
-from sqlalchemy.orm import joinedload, class_mapper, declarative_base, DeclarativeBase
-from fastapi import HTTPException, status
-from pydantic import BaseModel as PydanticModel
+from sqlalchemy.orm import DeclarativeBase
 from app.db.base import Base
-import json
 from app.schemas.item import SItem
 
 

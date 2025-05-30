@@ -40,7 +40,7 @@
                 {% endif %}
             </div>
         {% endfor %}
-        <button type="submit">Сохранить</button>
+        <button type="submit">Найти</button>
     </form>
 
     <!-- Отправленные данные -->
@@ -55,6 +55,7 @@
     <div style="margin-top: 2rem; border: 1px solid #ccc; padding: 10px;">
         <h3>Результат поиска:</h3>
         <button onclick="applyFilters()">Фильтровать</button>
+<div id="tableContainer" style="max-height: 600px; overflow-y: auto; border: 1px solid #ccc; margin-top: 2rem;">
         <table id="productTable">
     <!-- Строка фильтров -->
     <thead>
@@ -88,7 +89,7 @@
             <th onclick="setSort('name')">Название <span class="sort-icon" id="name-sort-icon"></span></th>
             <th onclick="setSort('brand')">Бренд <span class="sort-icon" id="brand-sort-icon"></span></th>
             <th onclick="setSort('price_u')">Цена <span class="sort-icon" id="price_u-sort-icon"></span></th>
-            <th onclick="setSort('sale_price_u')">Скидочная цена <span class="sort-icon" id="sale_price_u-sort-icon"></span></th>
+            <th onclick="setSort('sale_price_u')">Цена со скидкой <span class="sort-icon" id="sale_price_u-sort-icon"></span></th>
             <th onclick="setSort('feedbacks')">Отзывы <span class="sort-icon" id="feedbacks-sort-icon"></span></th>
             <th onclick="setSort('rating')">Рейтинг <span class="sort-icon" id="rating-sort-icon"></span></th>
         </tr>
@@ -99,12 +100,12 @@
     </tbody>
 </table>
     </div>
+</div>
 
 
 
 
-
-<script src="/static/js/table2.js"></script>
+<script src="/static/js/table.js"></script>
 <!-- Подключение Font Awesome для стрелок -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css ">
 

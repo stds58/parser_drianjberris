@@ -29,3 +29,15 @@ th, td {
     vertical-align: middle;
     margin-left: 5px;
 }
+
+#tableContainer {
+    max-height: 600px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Плавность на iOS */
+}
+
+#productTable {
+    width: 100%;
+    table-layout: fixed; /* Чтобы ширина колонок не менялась */
+    border-collapse: collapse;
+}

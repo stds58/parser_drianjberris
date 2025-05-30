@@ -1,20 +1,12 @@
-from app.crud.search import SearchDAO
-from app.schemas.search import SSearch, SSearchAdd, SSearchFilter
-from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import ValidationError
-from sqlalchemy.exc import IntegrityError
-from asyncpg.exceptions import UniqueViolationError
-from fastapi import Request
+import anyio
+import asyncio
 from fastapi.datastructures import FormData
-from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.session import async_session_maker
+from app.crud.search import SearchDAO
 from app.services.parser_worker import run_parser
 from app.services.item import find_all_stream_item
-import anyio
-from app.dependencies.get_db import connection
-from fastapi import Depends
-from app.db.session import get_session_with_isolation
-from app.db.session import async_session_maker
-import asyncio
+from app.schemas.search import SSearch, SSearchAdd, SSearchFilter
 
 
 async def find_many_search(filters: SSearchFilter, session: AsyncSession):
