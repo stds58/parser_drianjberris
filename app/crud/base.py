@@ -1,13 +1,12 @@
-from datetime import datetime
 from typing import Optional, List, Dict, TypeVar, Any, Generic, ClassVar, AsyncGenerator
-from sqlalchemy import update as sqlalchemy_update, delete as sqlalchemy_delete
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import Select, select
-from sqlalchemy.orm import joinedload, class_mapper, declarative_base, DeclarativeBase
-from fastapi import HTTPException
+from fastapi import status
 from pydantic import BaseModel as PydanticModel
+from sqlalchemy import delete as sqlalchemy_delete
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import Select, select, insert
+from sqlalchemy.orm import DeclarativeBase
 from app.db.base import Base
+from app.schemas.item import SItem
 
 
 assert issubclass(Base, DeclarativeBase)
@@ -42,7 +41,21 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         if filters is not None:
             query = cls._apply_filters(query, filters)
         result = await session.execute(query)
-        return result.scalars().all()
+        results = result.unique().scalars().all()
+        return [cls.pydantic_model.model_validate(obj, from_attributes=True) for obj in results]
+
+    @classmethod
+    async def find_all_stream(cls,
+                              session: AsyncSession,
+                              filters: FilterSchemaType = None
+                              ) -> AsyncGenerator[ModelType, None]:
+        query = select(cls.model)
+        if filters is not None:
+            query = cls._apply_filters(query, filters)
+        stream = await session.stream_scalars(query)
+        async for record in stream:
+            item = SItem.model_validate(record)
+            yield item.model_dump_json()
 
     @classmethod
     async def add_one(cls, session: AsyncSession, **values) -> ModelType:
@@ -53,11 +66,22 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         return new_instance
 
     @classmethod
-    async def delete_one(cls, session: AsyncSession, id: int) -> dict:
-        query = sqlalchemy_delete(cls.model).filter_by(id=id)
+    async def add_many(cls, session: AsyncSession, values_list: List[Dict]) -> None:
+        stmt = insert(cls.model).values(values_list)
+        await session.execute(stmt)
+        await session.flush()
+        await session.commit()
+
+    @classmethod
+    async def delete_all(cls, session: AsyncSession) -> dict:
+        query = sqlalchemy_delete(cls.model)
         result = await session.execute(query)
-        if result.rowcount == 0:
-            raise HTTPException(status_code=404, detail=f"Объект с ID {id} не найден")
-        return {"message": f"Объект с id {id} удален!", "deleted_count": result.rowcount}
+        return {
+            "status": "success",
+            "message": f"{result.rowcount} записей удалено",
+            "deleted_count": result.rowcount,
+            "http_status": status.HTTP_200_OK,
+        }
+
 
 

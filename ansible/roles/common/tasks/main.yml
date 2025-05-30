@@ -1,0 +1,27 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install required packages
+  apt:
+    name:
+      - git
+      - curl
+      - net-tools
+      - iproute2
+      - nmap
+      - traceroute
+      - iptables
+      - python3-pip
+      - jq
+    state: present
+
+- name: Ensure Docker dependencies are installed
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+    state: present

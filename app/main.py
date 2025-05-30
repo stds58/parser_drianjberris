@@ -1,23 +1,22 @@
-from fastapi import FastAPI, HTTPException
-from app.core.config import settings
+from pathlib import Path
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-#from app.models import Item
-#from app.schemas import ItemCreate, ItemResponse
-from sqlalchemy.orm import Session
-#from app.database import engine, Base, AsyncSessionLocal, get_db
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, insert
-from sqlalchemy import text
-#from app  all import connection, Product, get_db
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from app.core.config import settings
 from app.api.v1.base_router import v1_router
 from app.api.v2.base_router import v2_router
 
 
-#app = FastAPI(debug=settings.DEBUG)
-app = FastAPI(debug=settings.app.DEBUG, title="API", version="0.1.0")
+app = FastAPI(debug=settings.DEBUG, title="API", version="0.1.0")
 
+# Получаем путь к текущему файлу main.py
+CURRENT_FILE = Path(__file__).resolve()
+CURRENT_DIR = CURRENT_FILE.parent
+
+# Теперь можно указать точный путь к static/
+STATIC_DIR = CURRENT_DIR / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -26,14 +25,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# http://localhost:8000/api/v1/search/find/
+@app.get("/")
+async def redirect_to_frontend():
+    return RedirectResponse(url="/frontend/v2/search/add")
 
 app.include_router(v1_router, prefix="/api")
 app.include_router(v2_router, prefix="/frontend")
-
-@app.get("/test")
-def test():
-    return {"message": "Hello, world"}
 
 
 

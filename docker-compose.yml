@@ -1,12 +1,33 @@
 version: '3.8'
 
 services:
+  fastapi-app:
+    container_name: fastapi-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "echo 'Waiting for DB to be ready...' && sleep 10 && alembic revision --autogenerate -m 'Auto-generated migration' || echo 'No changes in model'; alembic upgrade head; uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      PYTHONPATH: /parser_drianberris
+    volumes:
+      - .:/parser_drianberris/
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - mynetwork
+    restart: unless-stopped
+
   db:
     image: postgres:16
-    container_name: postgres-db
+    container_name: wb-db
     environment:
-      POSTGRES_USER: ${DB_LOGIN}
-      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:
       - "5434:5432"
@@ -15,6 +36,11 @@ services:
     networks:
       - mynetwork
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   pg_data:

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <h2>{{ title }}</h2>
@@ -39,15 +40,67 @@
                 {% endif %}
             </div>
         {% endfor %}
-        <button type="submit">Сохранить</button>
+        <button type="submit">Найти</button>
     </form>
 
-    <!-- Отправленные данные -->
-    {% if data %}
-        <div style="margin-top: 2rem; border: 1px solid #ccc; padding: 10px;">
-            <h3>Вы ввели:</h3>
-            <pre>{{ data }}</pre>
-        </div>
-    {% endif %}
+    <div style="margin-top: 2rem; border: 1px solid #ccc; padding: 10px;">
+        <h3>Результат поиска по слову {{ phrase }}:</h3>
+        <button onclick="applyFilters()">Фильтровать</button>
+<div id="tableContainer" style="max-height: 600px; overflow-y: auto; border: 1px solid #ccc; margin-top: 2rem;">
+        <table id="productTable">
+    <!-- Строка фильтров -->
+    <thead>
+        <tr class="filter-row">
+            <th><input type="text" class="filter-input" data-column="name"></th>
+            <th><input type="text" class="filter-input" data-column="brand"></th>
+            <th>
+                <input type="number" class="range-input" data-column="price_u" placeholder="От">
+                -
+                <input type="number" class="range-input" data-column="price_u" placeholder="До">
+            </th>
+            <th>
+                <input type="number" class="range-input" data-column="sale_price_u" placeholder="От">
+                -
+                <input type="number" class="range-input" data-column="sale_price_u" placeholder="До">
+            </th>
+            <th>
+                <input type="number" class="range-input" data-column="feedbacks" placeholder="От">
+                -
+                <input type="number" class="range-input" data-column="feedbacks" placeholder="До">
+            </th>
+            <th>
+                <input type="number" class="range-input" data-column="rating" placeholder="От">
+                -
+                <input type="number" class="range-input" data-column="rating" placeholder="До">
+            </th>
+        </tr>
+
+        <!-- Заголовки столбцов (для сортировки) -->
+        <tr class="sort-row">
+            <th onclick="setSort('name')">Название <span class="sort-icon" id="name-sort-icon"></span></th>
+            <th onclick="setSort('brand')">Бренд <span class="sort-icon" id="brand-sort-icon"></span></th>
+            <th onclick="setSort('price_u')">Цена <span class="sort-icon" id="price_u-sort-icon"></span></th>
+            <th onclick="setSort('sale_price_u')">Цена со скидкой <span class="sort-icon" id="sale_price_u-sort-icon"></span></th>
+            <th onclick="setSort('feedbacks')">Отзывы <span class="sort-icon" id="feedbacks-sort-icon"></span></th>
+            <th onclick="setSort('rating')">Рейтинг <span class="sort-icon" id="rating-sort-icon"></span></th>
+        </tr>
+    </thead>
+
+    <tbody id="tableBody">
+        <!-- Данные будут вставлены сюда -->
+    </tbody>
+</table>
+    </div>
+</div>
+
+
+
+
+<script src="/static/js/table.js"></script>
+<!-- Подключение Font Awesome для стрелок -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css ">
+
+
 </body>
 </html>
+

@@ -1,14 +1,14 @@
+from pathlib import Path
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
-from app.dependencies.get_db import connection
-from app.services.item import find_many_item, add_one_item
-from app.schemas.item import SItemFilter, SItemAdd
-from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.templating import Jinja2Templates
-from pathlib import Path
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 from asyncpg.exceptions import UniqueViolationError
+from app.services.item import find_many_item, add_one_item
+from app.schemas.item import SItemFilter, SItemAdd
+from app.dependencies.get_db import connection
 
 
 V2_DIR = Path(__file__).resolve().parent
@@ -34,7 +34,7 @@ MODEL_MAP = {
 }
 
 @router.get("/add")
-async def show_add_form(request: Request, model: str = "manufacturer"):
+async def show_add_form(request: Request, model: str = "item"):
     ModelClass = MODEL_MAP[model]
     return templates.TemplateResponse("dynamic_form.html", {
         "request": request,
@@ -43,26 +43,26 @@ async def show_add_form(request: Request, model: str = "manufacturer"):
     })
 
 @router.post("/add", response_class=HTMLResponse)
-async def put_manufacturer(request: Request, session: AsyncSession = Depends(connection())):
+async def put_search(request: Request, session: AsyncSession = Depends(connection())):
     try:
         form_data = await request.form()
-        manufacturer_data = SItemAdd(**dict(form_data))
+        item_data = SItemAdd(**dict(form_data))
 
-        db_manufacturer = await add_one_item(data=manufacturer_data, session=session)
+        db_item = await add_one_item(data=item_data, session=session)
 
         return templates.TemplateResponse("dynamic_form.html", {
             "request": request,
             "fields": SItemAdd.model_fields,
-            "title": "Добавить производителя",
+            "title": "Добавить item",
             "form_values": dict(form_data),
-            "data": db_manufacturer
+            "data": db_item
         })
     except ValidationError as e:
         # Ошибки валидации Pydantic
         return templates.TemplateResponse("dynamic_form.html", {
             "request": request,
             "fields": SItemAdd.model_fields,
-            "title": "Добавить производителя",
+            "title": "Добавить item",
             "form_values": dict(form_data),
             "errors": e.errors()
         })
@@ -79,7 +79,7 @@ async def put_manufacturer(request: Request, session: AsyncSession = Depends(con
         return templates.TemplateResponse("dynamic_form.html", {
             "request": request,
             "fields": SItemAdd.model_fields,
-            "title": "Добавить производителя",
+            "title": "Добавить item",
             "form_values": dict(form_data),
             "errors": [{"loc": ["База данных"], "msg": error_msg}]
         })

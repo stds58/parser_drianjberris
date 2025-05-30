@@ -18,20 +18,10 @@ from sqlalchemy.orm import DeclarativeBase, declared_attr, Mapped, mapped_column
 from sqlalchemy import String, Boolean, ForeignKey
 
 
-
 # настройка аннотаций
 int_pk = Annotated[int, mapped_column(primary_key=True, autoincrement=True)]
 created_at = Annotated[datetime, mapped_column(DateTime(timezone=True), server_default=func.now())]
 updated_at = Annotated[datetime, mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())]
-
-def fk_cascade(table_name: str):
-    return Annotated[
-        int,
-        mapped_column(
-            ForeignKey(f"{table_name}.id", ondelete="CASCADE"),
-            nullable=False
-        )
-    ]
 
 
 class Base(AsyncAttrs, DeclarativeBase):

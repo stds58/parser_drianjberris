@@ -1,0 +1,80 @@
+---
+# Установка Nginx
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+
+- name: Get Docker container IPs
+  shell: >
+    docker network inspect mynetwork
+  register: docker_containers
+
+- name: Debug docker_containers
+  debug:
+    var: docker_containers
+
+- name: Parse Docker container IPs with Python
+  set_fact:
+    docker_ips: >-
+      {{
+        docker_containers.stdout | from_json
+        | first | json_query('Containers.*')
+        | selectattr('Name', 'in', ['fastapi-app-1'])
+        | map(attribute='IPv4Address') | map('split', '/') | map('first')
+        | list
+      }}
+  when: docker_containers.stdout != ''
+
+- name: Debug Docker IPs
+  debug:
+    var: docker_ips
+
+- name: Update /etc/hosts with Docker container IPs
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item.split(' ')[0] }} {{ item.split(' ')[1] }}"
+    state: present
+  loop: >-
+    {{
+      docker_ips | zip(['fastapi-app-1']) | map('join', ' ') | list
+    }}
+  when: docker_ips is defined
+
+- name: Debug /etc/hosts
+  command: cat /etc/hosts
+  register: hosts_file
+
+- name: Show /etc/hosts content
+  debug:
+    msg: "{{ hosts_file.stdout }}"
+
+# Создание директории sites-available
+- name: Ensure /etc/nginx/sites-available exists
+  file:
+    path: /etc/nginx/sites-available
+    state: directory
+    mode: '0755'
+
+- name: Enable Nginx site configuration
+  file:
+    src: /etc/nginx/sites-available/default-http
+    dest: /etc/nginx/sites-enabled/default-http
+    state: link
+
+# Копирование шаблона конфигурации Nginx (HTTP)
+- name: Copy initial Nginx HTTP configuration template
+  template:
+    src: nginx_http.conf.j2
+    dest: /etc/nginx/sites-available/default-http
+    owner: root
+    group: root
+    mode: '0644'
+
+
+- name: Test Nginx configuration
+  command: nginx -t
+  register: nginx_test_result
+  changed_when: "'syntax is ok' in nginx_test_result.stdout and 'test is successful' in nginx_test_result.stdout"
+  notify: Reload Nginx
+
