@@ -8,7 +8,7 @@ async def find_many_item(filters: SItemFilter, session: AsyncSession):
     return items
 
 async def find_all_stream_item(filters: SItemFilter, session: AsyncSession):
-    rows= ItemDAO.find_all_stream(session=session, filters=filters)
+    rows = ItemDAO.find_all_stream(session=session, filters=filters)
     async for row in rows:
         yield row
 
@@ -17,7 +17,6 @@ async def add_one_item(data: SItemAdd, session: AsyncSession):
     return item
 
 async def add_many_item(data: SItemAdd, session: AsyncSession):
-    #print("Values list sample:", data)
     item = await ItemDAO.add_many(session=session, values_list=data)
     return item
 

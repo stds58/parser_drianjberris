@@ -55,7 +55,7 @@ async def add_new_items(session: AsyncSession):
             await asyncio.sleep(1)
             try:
                 async for item in find_all_stream_item(filters=None, session=stream_session):
-                    yield item  # стримим по мере получения
+                    yield item
             finally:
                 await stream_session.close()
 
@@ -63,17 +63,14 @@ async def add_new_items(session: AsyncSession):
             async with anyio.create_task_group() as tg:
                 tg.start_soon(run_and_save)
 
-                # Параллельно читаем и стримим данные
                 async for item in stream_from_db():
-                    yield item  # отправляем клиенту по мере поступления
+                    yield item
 
         except GeneratorExit:
-            # корректное завершение генератора
             pass
         finally:
-            # убедимся, что все сессии закрыты
             await parser_session.close()
             await stream_session.close()
-    #return None
+
 
 

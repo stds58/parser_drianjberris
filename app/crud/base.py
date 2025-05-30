@@ -8,6 +8,8 @@ from sqlalchemy.orm import joinedload, class_mapper, declarative_base, Declarati
 from fastapi import HTTPException, status
 from pydantic import BaseModel as PydanticModel
 from app.db.base import Base
+import json
+from app.schemas.item import SItem
 
 
 assert issubclass(Base, DeclarativeBase)
@@ -55,7 +57,8 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
             query = cls._apply_filters(query, filters)
         stream = await session.stream_scalars(query)
         async for record in stream:
-            yield record
+            item = SItem.model_validate(record)
+            yield item.model_dump_json()
 
     @classmethod
     async def add_one(cls, session: AsyncSession, **values) -> ModelType:

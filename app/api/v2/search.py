@@ -47,8 +47,8 @@ MODEL_MAP = {
 async def stream_data(session: AsyncSession = Depends(connection())):
     async def event_generator():
         async for item in add_new_items(session=session):
+            #yield f"data: {item.model_dump_json()}\n\n"
             yield f"data: {item}\n\n"
-
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
@@ -63,11 +63,10 @@ async def show_add_search_form(request: Request, model: str = "search", session:
             data = None
         else:
             phrase = db_search[0].phrase
-            async for item in add_new_items(session=session):
-                data = item
-                #print('ddddddddddd ',item)
-            #goods = WildBeriesParser(phrase)
-            #data = goods.get_response
+            # async for item in add_new_items(session=session):
+            #     data = item
+            goods = WildBeriesParser(phrase, 100)
+            data = goods.get_response
 
         return templates.TemplateResponse("dynamic_form.html", {
             "request": request,
@@ -114,6 +113,7 @@ async def show_add_search_form(request: Request, model: str = "search", session:
 
 @router.post("/add", response_class=HTMLResponse)
 async def put_search(request: Request, session: AsyncSession = Depends(connection())):
+    print('22222')
     try:
         form_data = await request.form()
         await delete_all_item(session=session)
