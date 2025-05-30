@@ -1,0 +1,67 @@
+---
+- name: Ensure directory exists
+  file:
+    path: /opt/parser_drianberris
+    state: directory
+
+- name: Clone backend repository
+  git:
+    repo: https://{{ github_token }}@github.com/stds58/parser_drianjberris
+    dest: /opt/vard-backend
+    version: master
+    force: yes
+
+- name: Copy .env file
+  copy:
+    src: .env
+    dest: /opt/parser_drianberris/.env
+    force: yes
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Copy .env file
+  copy:
+    src: .env
+    dest: /opt/parser_drianberris/.env
+    force: yes
+    owner: root
+    group: root
+    mode: '0600'
+
+# Остановите и удалите существующие контейнеры
+- name: Stop and remove existing containers
+  command: >
+    docker-compose down --volumes --remove-orphans
+  args:
+    chdir: /opt/parser_drianberris
+  become: yes
+  ignore_errors: yes
+
+- name: Build backend Docker image with no cache
+  command: >
+    docker-compose build --no-cache
+  args:
+    chdir: /opt/parser_drianberris
+  become: yes
+
+- name: Restart backend services with Docker Compose
+  command: >
+    docker-compose up -d --force-recreate
+  args:
+    chdir: /opt/parser_drianberris
+  become: yes
+
+# Добавляем запись в /etc/hosts
+- name: Get backend container IP
+  shell: "docker inspect -f '{{ '{{' }}range .NetworkSettings.Networks{{ '}}' }}{{ '{{' }}.IPAddress{{ '}}' }}{{ '{{' }}end{{ '}}' }}' fastapi-app-1"
+  register: container_ip
+  changed_when: false
+
+- name: Add backend container host entry to /etc/hosts
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      {{ container_ip.stdout }} fastapi-app-1
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - DOCKER CONTAINER"
+    state: present

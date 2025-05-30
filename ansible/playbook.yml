@@ -1,0 +1,13 @@
+---
+#wsl ansible-playbook -i inventory.ini playbook.yml
+- name: Deploy VardTech Application
+  hosts: all
+  become: yes
+  vars_files:
+    - vars/secrets.yml
+  roles:
+    - common
+    - docker
+    - backend
+    - nginx
+
