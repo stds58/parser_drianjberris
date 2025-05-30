@@ -43,17 +43,8 @@
         <button type="submit">Найти</button>
     </form>
 
-    <!-- Отправленные данные -->
-    {% if phrase %}
-        <div style="margin-top: 2rem; border: 1px solid #ccc; padding: 10px;">
-            <h3>Вы ввели:</h3>
-            <pre>{{ phrase }}</pre>
-        </div>
-    {% endif %}
-
-
     <div style="margin-top: 2rem; border: 1px solid #ccc; padding: 10px;">
-        <h3>Результат поиска:</h3>
+        <h3>Результат поиска по слову {{ phrase }}:</h3>
         <button onclick="applyFilters()">Фильтровать</button>
 <div id="tableContainer" style="max-height: 600px; overflow-y: auto; border: 1px solid #ccc; margin-top: 2rem;">
         <table id="productTable">
