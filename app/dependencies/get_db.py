@@ -37,4 +37,3 @@ def connection(isolation_level: Optional[str] = None, commit: bool = True):
                     await session.rollback()
                 raise
     return dependency
-

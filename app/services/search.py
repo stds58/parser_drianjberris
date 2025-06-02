@@ -2,7 +2,6 @@ import anyio
 import asyncio
 from fastapi.datastructures import FormData
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.session import async_session_maker
 from app.crud.search import SearchDAO
 from app.services.parser_worker import run_parser
 from app.services.item import find_all_stream_item
@@ -27,15 +26,15 @@ async def add_new_search(data: FormData, session: AsyncSession):
     phrase = await add_one_search(data=search_data, session=session)
     return phrase
 
-async def add_new_items(session: AsyncSession):
+async def add_new_items(session: AsyncSession,session2: AsyncSession,session3: AsyncSession):
     db_search = await find_many_search(filters=None, session=session)
     await session.close()
     if len(db_search) > 0:
         phrase = db_search[0].phrase
         phrase_id = db_search[0].id
 
-        parser_session = async_session_maker()
-        stream_session = async_session_maker()
+        parser_session = session2
+        stream_session = session3
         async def run_and_save():
             try:
                 async for batch in run_parser(phrase_id=phrase_id, phrase=phrase, session=parser_session):

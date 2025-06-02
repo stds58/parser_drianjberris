@@ -12,6 +12,7 @@ from app.schemas.search import SSearchFilter, SSearchAdd
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
+
 V2_DIR = Path(__file__).resolve().parent
 API_DIR = V2_DIR.parent
 APP_DIR = API_DIR.parent
@@ -36,9 +37,11 @@ MODEL_MAP = {
 
 
 @router.get("/stream-data")
-async def stream_data(session: AsyncSession = Depends(connection())):
+async def stream_data(session: AsyncSession = Depends(connection()),
+                      session2: AsyncSession = Depends(connection()),
+                      session3: AsyncSession = Depends(connection())):
     async def event_generator():
-        async for item in add_new_items(session=session):
+        async for item in add_new_items(session=session,session2=session2,session3=session3):
             yield f"data: {item}\n\n"
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
