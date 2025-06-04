@@ -3,7 +3,8 @@ from fastapi import status
 from pydantic import BaseModel as PydanticModel
 from sqlalchemy import delete as sqlalchemy_delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import Select, select, insert
+from sqlalchemy import Select, select, update  #, insert
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import DeclarativeBase
 from app.db.base import Base
 from app.schemas.item import SItem
@@ -58,7 +59,7 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
             yield item.model_dump_json()
 
     @classmethod
-    async def add_one(cls, session: AsyncSession, **values) -> ModelType:
+    async def add_one(cls, session: AsyncSession, values: Dict) -> ModelType:
         new_instance = cls.model(**values)
         session.add(new_instance)
         await session.flush()
@@ -68,6 +69,7 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
     @classmethod
     async def add_many(cls, session: AsyncSession, values_list: List[Dict]) -> None:
         stmt = insert(cls.model).values(values_list)
+        stmt = stmt.on_conflict_do_nothing()
         await session.execute(stmt)
         await session.flush()
         await session.commit()
@@ -82,6 +84,22 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
             "deleted_count": result.rowcount,
             "http_status": status.HTTP_200_OK,
         }
+
+    @classmethod
+    async def find_items_since(cls, last_id: int, session: AsyncSession):
+        result = await session.execute(
+            select(cls.model).where(cls.model.id > last_id).order_by(cls.model.id)
+        )
+        return result.scalars().all()
+
+    @classmethod
+    async def update_one(cls, id: int, values: Dict, session: AsyncSession) -> None:
+        stmt = update(cls.model).where(cls.model.id == id).values(values)
+        await session.execute(stmt)
+        await session.commit()
+
+
+
 
 
 

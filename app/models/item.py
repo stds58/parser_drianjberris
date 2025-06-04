@@ -11,6 +11,7 @@ class Item(Base):
     sale_price_u: Mapped[float] = mapped_column(info={"verbose_name": "цена со скидкой в копейках"})
     feedbacks: Mapped[int] = mapped_column(info={"verbose_name": "количество отзывов"})
     rating: Mapped[int] = mapped_column(info={"verbose_name": "рейтинг"})
+    wb_id: Mapped[int] = mapped_column(unique=True, nullable=False, info={"verbose_name": "id дряньбериса"})
 
     def __str__(self):
         return f"{self.__class__.__name__}(id={self.id}, name={self.name!r})"

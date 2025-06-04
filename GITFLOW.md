@@ -132,3 +132,19 @@
 
     alembic revision --autogenerate -m "Auto-generated migration"
     alembic upgrade head
+
+## ошибки
+**ошибка**
+
+    ERROR:    [Errno 10048] error while attempting to bind on address ('0.0.0.0', 8000): 
+    обычно разрешается только одно использование адреса сокета
+
+    Это приводит к тому, что FastAPI не может запуститься нормально , и поэтому:
+    Не вызывается dependency() из connection() и тд
+
+**решение: убить все питоновские процессы**
+
+    netstat -ano | findstr :8000
+    taskkill /PID <ваш_PID> /F
+
+

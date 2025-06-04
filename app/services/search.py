@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud.search import SearchDAO
 from app.services.parser_worker import run_parser
 from app.services.item import find_all_stream_item
-from app.schemas.search import SSearch, SSearchAdd, SSearchFilter
+from app.schemas.search import SSearch, SSearchAdd, SSearchFilter, SSearchUpdate
 
 
 async def find_many_search(filters: SSearchFilter, session: AsyncSession):
@@ -13,7 +13,7 @@ async def find_many_search(filters: SSearchFilter, session: AsyncSession):
     return searchs
 
 async def add_one_search(data: SSearchAdd, session: AsyncSession):
-    search = await SearchDAO.add_one(session=session, **data.model_dump())
+    search = await SearchDAO.add_one(session=session, values=data)
     return search
 
 async def delete_all_search(session: AsyncSession):
@@ -22,9 +22,16 @@ async def delete_all_search(session: AsyncSession):
 
 async def add_new_search(data: FormData, session: AsyncSession):
     search_data = SSearchAdd(**dict(data))
+    data = {"phrase": search_data.phrase, "is_parsed": False}
     del_db_search = await delete_all_search(session=session)
-    phrase = await add_one_search(data=search_data, session=session)
+    phrase = await add_one_search(data=data, session=session)
     return phrase
+
+async def update_one_search(phrase_id: int, session: AsyncSession):
+    validated_data = SSearchUpdate(id=phrase_id)
+    values = {"is_parsed": True}
+    update_data = await SearchDAO.update_one(id=validated_data.id, values=values, session=session)
+    return update_data
 
 async def add_new_items(session: AsyncSession,session2: AsyncSession,session3: AsyncSession):
     db_search = await find_many_search(filters=None, session=session)
@@ -33,12 +40,30 @@ async def add_new_items(session: AsyncSession,session2: AsyncSession,session3: A
         phrase = db_search[0].phrase
         phrase_id = db_search[0].id
 
+        print('db_search[0].is_parsed ',db_search[0].is_parsed)
+
+        # Проверяем, был ли уже выполнен парсинг
+        if db_search[0].is_parsed:
+            async def stream_from_db():
+                try:
+                    async for item in find_all_stream_item(filters=None, session=session3):
+                        yield item
+                finally:
+                    await session3.close()
+
+            async for item in stream_from_db():
+                yield item
+            return
+
         parser_session = session2
         stream_session = session3
         async def run_and_save():
             try:
                 async for batch in run_parser(phrase_id=phrase_id, phrase=phrase, session=parser_session):
-                    pass
+                    if batch == "ok":
+                        print("================================================================================")
+                        await update_one_search(phrase_id=phrase_id, session=session)
+                        break
             finally:
                 await parser_session.close()
 

@@ -23,3 +23,7 @@ async def add_many_item(data: SItemAdd, session: AsyncSession):
 async def delete_all_item(session: AsyncSession):
     item = await ItemDAO.delete_all(session=session)
     return item
+
+async def find_items_since(last_id: int, session: AsyncSession):
+    items = await ItemDAO.find_items_since(last_id=last_id, session=session)
+    return items

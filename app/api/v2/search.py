@@ -56,6 +56,7 @@ async def show_add_search_form(request: Request, model: str = "search", session:
             phrase = db_search[0].phrase
         else:
             phrase = None
+        print('SSearchAdd.model_fields ',SSearchAdd.model_fields)
         return templates.TemplateResponse("dynamic_form.html", {
             "request": request,
             "fields": ModelClass.model_fields,

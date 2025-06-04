@@ -12,6 +12,7 @@ class SItem(BaseConfigModel):
     sale_price_u: Optional[float] = None
     feedbacks: Optional[int] = None
     rating: Optional[int] = None
+    wb_id: Optional[int] = None
 
 
 class SItemAdd(BaseConfigModel):
@@ -22,6 +23,7 @@ class SItemAdd(BaseConfigModel):
     sale_price_u: float = Field(...)
     feedbacks: int = Field(...)
     rating: int = Field(...)
+    wb_id: int = Field(...)
 
 
 class SItemFilter(BaseFilter):
@@ -33,3 +35,4 @@ class SItemFilter(BaseFilter):
     sale_price_u: Optional[float] = None
     feedbacks: Optional[int] = None
     rating: Optional[int] = None
+    wb_id: Optional[int] = None

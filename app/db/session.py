@@ -6,9 +6,7 @@ from contextlib import asynccontextmanager
 from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from dotenv import load_dotenv
 
-load_dotenv()
 
 
 DATABASE_URL = get_db_url()
