@@ -98,6 +98,24 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         await session.execute(stmt)
         await session.commit()
 
+    @classmethod
+    async def find_one_or_none(cls,
+                               session: AsyncSession,
+                               filters: FilterSchemaType = None
+                               ) -> Optional[ModelType]:
+        query = select(cls.model)
+        if filters is not None:
+            if isinstance(filters, dict):
+                filter_dict = filters  # Если filters уже словарь, используем его напрямую
+            else:
+                # Если filters — это Pydantic-модель, преобразуем её в словарь
+                filter_dict = filters.model_dump(exclude_unset=True)
+            # filter_dict = filters.model_dump(exclude_unset=True)
+            filter_dict = {key: value for key, value in filter_dict.items() if value is not None}
+            query = query.filter_by(**filter_dict)
+        result = await session.execute(query)
+        return result.scalar_one_or_none()
+
 
 
 

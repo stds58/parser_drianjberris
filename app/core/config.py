@@ -26,6 +26,21 @@ class Settings(BaseSettings):
     DB_PORT: int
     DATABASE_URL: str
 
+    KEYCLOAK_URL: str
+    KEYCLOAK_REALM: str
+    KEYCLOAK_CLIENT_ID: str
+    KEYCLOAK_CLIENT_SECRET: str
+    KEYCLOAK_POSTGRES_USER: str
+    KEYCLOAK_POSTGRES_PASSWORD: str
+    KEYCLOAK_POSTGRES_DB: str
+    KEYCLOAK_DB_PORT: str
+    KEYCLOAK_ADMIN: str
+    KEYCLOAK_ADMIN_PASSWORD: str
+    KEYCLOAK_PORT: str
+    FRONT_URL: str
+    SSO_SESSION_MAX_LIFESPAN: int
+    SSO_SESSION_IDLE_TIMEOUT: int
+
     model_config = SettingsConfigDict(
         env_file=env_path
     )
@@ -40,4 +55,5 @@ def get_db_url():
 def get_auth_data():
     return {"secret_key": settings.SECRET_KEY, "algorithm": settings.ALGORITHM}
 
-
+def get_auth_data():
+    return {"secret_key": settings.SECRET_KEY, "algorithm": settings.ALGORITHM}

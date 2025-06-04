@@ -20,6 +20,7 @@ from sqlalchemy import String, Boolean, ForeignKey
 
 # настройка аннотаций
 int_pk = Annotated[int, mapped_column(primary_key=True, autoincrement=True)]
+str_uniq = Annotated[str, mapped_column(unique=True, nullable=False)]
 created_at = Annotated[datetime, mapped_column(DateTime(timezone=True), server_default=func.now())]
 updated_at = Annotated[datetime, mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())]
 

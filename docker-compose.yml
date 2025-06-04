@@ -1,26 +1,26 @@
-version: '3.8'
+#version: '3.8'
 
 services:
-  fastapi-app:
-    container_name: fastapi-app
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: sh -c "echo 'Waiting for DB to be ready...' && sleep 10 && alembic revision --autogenerate -m 'Auto-generated migration' || echo 'No changes in model'; alembic upgrade head; uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
-    ports:
-      - "8000:8000"
-    environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-      PYTHONPATH: /parser_drianberris
-    volumes:
-      - .:/parser_drianberris/
-    env_file:
-      - .env
-    depends_on:
-      - db
-    networks:
-      - mynetwork
-    restart: unless-stopped
+#  fastapi-app:
+#    container_name: fastapi-app
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    command: sh -c "echo 'Waiting for DB to be ready...' && sleep 10 && alembic revision --autogenerate -m 'Auto-generated migration' || echo 'No changes in model'; alembic upgrade head; uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+#    ports:
+#      - "8000:8000"
+#    environment:
+#      DATABASE_URL: postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+#      PYTHONPATH: /parser_drianberris
+#    volumes:
+#      - .:/parser_drianberris/
+#    env_file:
+#      - .env
+#    depends_on:
+#      - db
+#    networks:
+#      - mynetwork
+#    restart: unless-stopped
 
   db:
     image: postgres:16
@@ -42,8 +42,54 @@ services:
       timeout: 5s
       retries: 10
 
+  postgres_keycloak:
+    image: postgres:latest
+    container_name: postgres_keycloak
+    environment:
+      POSTGRES_USER: ${KEYCLOAK_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${KEYCLOAK_POSTGRES_DB}
+    ports:
+      - "${KEYCLOAK_DB_PORT}:5432"
+    volumes:
+      - pg_data_keycloak:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $KEYCLOAK_POSTGRES_USER -d $KEYCLOAK_POSTGRES_DB || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres_keycloak
+      KC_DB_NAME: ${KEYCLOAK_POSTGRES_DB}
+      KC_DB_USERNAME: ${KEYCLOAK_POSTGRES_USER}
+      KC_DB_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_IMPORT: /opt/keycloak/data/import/tbcrealm.json
+      KC_IMPORT_FORCE: "true"
+    volumes:
+      - ./app/keycloak/realm-config/tbcrealm.json:/opt/keycloak/data/import/tbcrealm.json
+    ports:
+      - "${KEYCLOAK_PORT}:8080"
+    depends_on:
+      postgres_keycloak:
+        condition: service_healthy
+    command: [ "start-dev", "--import-realm" ]
+    restart: unless-stopped
+
 volumes:
   pg_data:
+    driver: local
+  pg_data_keycloak:
+    driver: local
 
 networks:
   mynetwork:

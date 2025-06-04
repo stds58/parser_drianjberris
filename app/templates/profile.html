@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Профиль</title>
+</head>
+<body>
+    <h2>Добро пожаловать, {{ user.get('preferred_username') }}</h2>
+    <p>Email: {{ user.get('email') }}</p>
+    <p>Имя: {{ user.get('given_name') }} {{ user.get('family_name') }}</p>
+
+    <form action="/auth/logout" method="get">
+        <button type="submit">Выйти</button>
+    </form>
+</body>
+</html>
