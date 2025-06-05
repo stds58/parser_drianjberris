@@ -7,7 +7,7 @@
     {
       "clientId": "${KEYCLOAK_CLIENT_ID}",
       "name": "${KEYCLOAK_CLIENT_ID}",
-      "redirectUris": ["${FRONT_URL}/frontend/v2/user/callback/", "${FRONT_URL}/frontend/v2/user/pageslogin"],
+      "redirectUris": ["${FRONT_URL}/auth/callback/", "${FRONT_URL}/auth/htmllogin"],
       "webOrigins": ["${FRONT_URL}"],
       "clientAuthenticatorType": "client-secret",
       "secret": "${KEYCLOAK_CLIENT_SECRET}",

@@ -1,6 +1,8 @@
 from fastapi import Request, HTTPException, status, Depends
 from passlib.context import CryptContext
 from jose import jwt, JWTError
+from jose.jwk import RSAKey
+from jwt import PyJWKClient
 from datetime import datetime, timedelta, timezone
 from app.core.config import get_auth_data
 from app.exceptions.exceptions import TokenExpiredException, NoJwtException, NoUserIdException, ForbiddenException
@@ -42,30 +44,31 @@ def get_token(request: Request):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Token not found')
     return token
 
+from app.core.config import settings
+KEYCLOAK_URL = settings.KEYCLOAK_URL
+KEYCLOAK_REALM = settings.KEYCLOAK_REALM
+
 
 async def get_current_user(token: str = Depends(get_token)):
     try:
-        auth_data = get_auth_data()
-        payload = jwt.decode(token, auth_data['secret_key'], algorithms=[auth_data['algorithm']])
-    except JWTError:
-        raise NoJwtException(detail="JWT-токен отсутствует или не валиден")
-        #raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Токен не валидный!')
+        TOKEN = token
 
-    expire = payload.get('exp')
-    expire_time = datetime.fromtimestamp(int(expire), tz=timezone.utc)
-    if (not expire) or (expire_time < datetime.now(timezone.utc)):
-        raise TokenExpiredException(detail="Срок действия токена не указан")
-        #raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Токен истек')
+        # Получаем JWKS
+        jwks_client = PyJWKClient(f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs")
+        signing_key = jwks_client.get_signing_key_from_jwt(TOKEN)
 
-    user_id = payload.get('sub')
-    if not user_id:
-        raise NoUserIdException()
-        #raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Не найден ID пользователя')
+        # Декодируем
+        payload = jwt.decode(
+            TOKEN,
+            key=signing_key.key,
+            algorithms=["RS256"],
+            audience="account",
+            options={"require_exp": True}
+        )
+        print("payload ",payload)
+    except JWTError as e:
+        raise NoJwtException(detail=f"JWT-токен отсутствует или не валиден {e}")
 
-    #user = await UsersDAO.find_one_or_none(id=int(user_id))
-    user = await UserDAO.find_one_or_none(filters={"id": int(user_id)})
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
-    return user
+    return payload
 
 
