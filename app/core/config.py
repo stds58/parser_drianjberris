@@ -45,8 +45,13 @@ class Settings(BaseSettings):
         env_file=env_path
     )
 
-settings = Settings()
+#settings = Settings()
+@lru_cache()
+def get_settings():
+    Settings()
+    return Settings()
 
+settings = get_settings()
 
 def get_db_url():
     return (f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@"

@@ -10,7 +10,7 @@ from app.api.v2.base_router import v2_router
 from app.api.auth.base_router import auth_router
 from starlette.middleware.sessions import SessionMiddleware
 from app.exceptions.exceptions import http_exception_handler,sqlalchemy_error_handler,integrity_error_handler
-from app.keycloak.keycloak import KeycloakManager, get_keycloak_manager, User
+from app.keycloak.keycloak import KeycloakManager
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 
@@ -52,7 +52,7 @@ app.include_router(v1_router, prefix="/api")
 app.include_router(v2_router, prefix="/frontend")
 app.include_router(auth_router, prefix="/auth", tags=['auth'])
 
-keycloak_manager = KeycloakManager(keycloak_url="http://localhost:8080", realm="tbcrealm")
+
 
 
 if __name__ == "__main__":

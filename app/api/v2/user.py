@@ -34,14 +34,11 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # async def get_me(user_data: User = Depends(get_current_user)):
 #     return user_data
 
-from app.core.config import settings
-KEYCLOAK_URL = settings.KEYCLOAK_URL
-KEYCLOAK_REALM = settings.KEYCLOAK_REALM
 
 @router.get("/me/")
 async def get_me(request: Request):
-    xx = KeycloakManager(keycloak_url=KEYCLOAK_URL, realm=KEYCLOAK_REALM)
-    yy = await xx.get_user_from_token(request=request)
+    xx = KeycloakManager(request=request)
+    yy = await xx.get_user_from_token()
     return yy
 # @router.get("/all_users/")
 # async def get_all_users(user_data: User = Depends(get_current_admin_user)):

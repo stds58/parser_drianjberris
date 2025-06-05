@@ -70,13 +70,10 @@
             "allowed-origins": "{payload.get('allowed-origins')}",
         """
 
-from jose import jwt
 from typing import Optional, Dict
 import httpx
 from fastapi import HTTPException, Depends, Request, status
 from pydantic import BaseModel
-from functools import lru_cache
-from app.models.user import User
 from jose import jwt, JWTError
 from jwt import PyJWKClient
 from app.exceptions.exceptions import TokenExpiredException, NoJwtException, NoUserIdException, ForbiddenException
@@ -84,56 +81,44 @@ from app.schemas.jwt_token import UserClaims
 from datetime import datetime
 import pytz
 import time
+from app.core.config import settings
 import logging
 
 
 logging.basicConfig(level=logging.INFO)
 
 
+
 class KeycloakManager:
-    def __init__(self, keycloak_url: str, realm: str):
-        self.keycloak_url = keycloak_url
-        self.realm = realm
+    def __init__(self, request: Request):
+        self.request = request
+        self.token = self.get_token()
         self.realm_public_key = self._fetch_realm_public_key()
 
-    @staticmethod
-    async def get_token(request: Request):
-        # Сначала ищем в заголовке Authorization
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            #print('auth_header[len("Bearer "):] ',auth_header[len("Bearer "):])
-            return auth_header[len("Bearer "):]
-
-        # Если не найдено — ищем в куках
-        token = request.cookies.get("users_access_token")
+    def get_token(self) -> str:
+        token = self.request.cookies.get("users_access_token")
         #print('token ',token)
         if token:
             return token
-
         raise HTTPException(status_code=401, detail="Missing token")
 
-        # print('request ',request)
-        # token = request.cookies.get('users_access_token')
-        # if not token:
-        #     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Token not found')
-        # return token
-
     def _fetch_realm_public_key(self) -> str:
-        url = f"{self.keycloak_url}/realms/{self.realm}"
+        url = f"{settings.KEYCLOAK_URL}/realms/{settings.KEYCLOAK_REALM}"
         with httpx.Client() as client:
             response = client.get(url)
             response.raise_for_status()
             return "-----BEGIN PUBLIC KEY-----\n" + response.json()["public_key"] + "\n-----END PUBLIC KEY-----"
 
-    def decode_token(self, token: str) -> Dict:
+    def decode_token(self) -> Dict:
         try:
             # Получаем JWKS
-            jwks_client = PyJWKClient(f"{self.keycloak_url}/realms/{self.realm}/protocol/openid-connect/certs")
-            signing_key = jwks_client.get_signing_key_from_jwt(token)
+            jwks_client = PyJWKClient(f"{settings.KEYCLOAK_URL}/realms/{settings.KEYCLOAK_REALM}/protocol/openid-connect/certs")
+            print('self.token ',self.token)
+            signing_key = jwks_client.get_signing_key_from_jwt(self.token)
 
             # Декодируем
             payload = jwt.decode(
-                token,
+                self.token,
                 key=signing_key.key,
                 algorithms=["RS256"],
                 audience="account",
@@ -143,10 +128,10 @@ class KeycloakManager:
         except JWTError as e:
             raise NoJwtException(detail=f"JWT-токен отсутствует или не валиден {e}")
 
-    async def get_user_from_token(self, request: Request) -> UserClaims:
+    async def get_user_from_token(self) -> UserClaims:
         logging.info("Получаем токен из заголовка")
-        token = await self.get_token(request=request)
-        payload = self.decode_token(token)
+        #token = await self.get_token()
+        payload = self.decode_token()
 
         #Проверка истечения срока действия
         if payload['exp'] < int(time.time()):
@@ -181,16 +166,3 @@ class KeycloakManager:
 
 
 
-@lru_cache()
-def get_keycloak_manager():
-    from dotenv import load_dotenv
-    import os
-    load_dotenv()
-    logging.info("Loading .env")
-    load_dotenv()
-    logging.info(f"KEYCLOAK_URL: {os.getenv('KEYCLOAK_URL')}")
-    logging.info(f"KEYCLOAK_REALM: {os.getenv('KEYCLOAK_REALM')}")
-    return KeycloakManager(
-        keycloak_url=os.getenv("KEYCLOAK_URL"),
-        realm=os.getenv("KEYCLOAK_REALM")
-    )
